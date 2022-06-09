@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>JW 3D sample code</title>
+
+    <!-- Babylon.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+    <script src="https://preview.babylonjs.com/ammo.js"></script>
+    <script src="https://preview.babylonjs.com/cannon.js"></script>
+    <script src="https://preview.babylonjs.com/Oimo.js"></script>
+    <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+    <script src="https://preview.babylonjs.com/babylon.js"></script>
+    <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+    <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+    <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+    <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+    <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="display: flex;position: absolute;bottom: 0;left:0;height: 10vh;width: 10vw;">
+        <img src="https://c0d1-103-250-164-233.ngrok.io/example2/logoA.png" alt="">
+    </div>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+        var canvas = document.getElementById("renderCanvas");
+        var advancedTexture;
+        var advancedTexture2;
+        var buttonTexture;
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var container_box;
+        var cap_box;
+        var selectedPickMash;
+        var capMet;
+        var ContainerBox;
+        var texture;
+        var myDynamicTexture;
+        var multimat;
+        var img_url = 'https://c0d1-103-250-164-233.ngrok.io/example2/logoA.png';
+        var createDefaultEngine = function () { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true, disableWebGL2Support: false }); };
+        var delayCreateScene = function () {
+            // Create a scene.
+
+
+            var scene = new BABYLON.Scene(engine);
+            if (!advancedTexture) {
+                advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+                advancedTexture2 = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+                buttonTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+            }
+            // Create a default skybox with an environment.
+            var hdrTexture = BABYLON.CubeTexture.CreateFromPrefilteredData("textures/environment.dds", scene);
+            var currentSkybox = scene.createDefaultSkybox(hdrTexture, true);
+            engine.loadingScreen = new loadingScreen(scene);
+            var containerMet = new BABYLON.StandardMaterial("container", scene);
+            var capMet = new BABYLON.StandardMaterial("cap", scene);
+            var panel = new BABYLON.GUI.StackPanel();
+            panel.width = "200px";
+            panel.isVertical = true;
+            panel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT;
+            panel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+            advancedTexture.addControl(panel);
+
+         
+
+            var textBlock = new BABYLON.GUI.TextBlock();
+            textBlock.text = "Container Color :";
+            textBlock.height = "30px";
+            panel.addControl(textBlock);
+
+
+            var picker = new BABYLON.GUI.ColorPicker();
+            picker.value = containerMet.diffuseColor;
+            picker.height = "150px";
+            picker.width = "150px";
+            picker.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+            picker.onValueChangedObservable.add(function (value) { // value is a color3
+              //  scene.createDefaultCameraOrLight(true, true, true);
+                // console.log('value',value);
+                containerMet.diffuseColor.copyFrom(value);
+                console.log('container_box.material',container_box.material);
+                container_box.material = containerMet;
+              // containerMet.update();
+            });
+
+            panel.addControl(picker);
+
+
+
+            //picker 2 
+            var panel2 = new BABYLON.GUI.StackPanel();
+            panel2.width = "200px";
+            panel2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            panel2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+            advancedTexture2.addControl(panel2);
+           
+            var textBlock2 = new BABYLON.GUI.TextBlock();
+            textBlock2.text = "Container Cap :";
+            textBlock2.height = "30px";
+            textBlock2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            textBlock2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+            panel2.addControl(textBlock2);
+            
+            var picker2 = new BABYLON.GUI.ColorPicker();
+            picker2.value = capMet.diffuseColor;
+            picker2.height = "150px";
+            picker2.width = "150px";
+            picker2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+            picker2.onValueChangedObservable.add(function (value) { // value is a color3
+                scene.createDefaultCameraOrLight(true, false, false);
+                var assetsManager2 = new BABYLON.AssetsManager(scene);
+                 console.log('container_box.material',cap_box.material);
+                 console.log('selectedPickMash',selectedPickMash);
+                 //if(selectedPickMash){
+                //containerMet.diffuseColor.copyFrom(value);
+               // container_box.material = containerMet;
+
+               capMet.diffuseColor.copyFrom(value);
+                console.log('container_box.material',cap_box.material);
+                cap_box.material = capMet;
+                // }
+              
+            });
+
+            panel2.addControl(picker2);
+
+          
+
+             //button 2 
+             var UiPanel = new BABYLON.GUI.StackPanel("horizontal");
+            UiPanel.isVertical = false;
+            UiPanel.top = "35%";
+            UiPanel.fontSize = "14px";
+            UiPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+            UiPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+            buttonTexture.addControl(UiPanel);
+
+            //左ボタン
+        var logoButton = BABYLON.GUI.Button.CreateSimpleButton("logoBtn", "Add Logo");
+        logoButton.width = "100px";
+        logoButton.height = "50px";
+        logoButton.cornerRadius = 5;
+        logoButton.color = "white";
+        logoButton.background = "black";
+        logoButton.onPointerDownObservable.add(()=> {
+           // box.position.x = box.position.x - 1;
+            console.log('click');
+           // var textureContext = ContainerBox.getContext();
+            // containerMet.diffuseTexture = hdrTexture;
+           // const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {slice_: 0.24, diameter:25, wrap: true, sideOrientation: BABYLON.Mesh.DOUBLESIDE});
+            console.log('canvas',canvas);
+            loadLogo();
+           // var decal = BABYLON.MeshBuilder.CreateDecal("decal", sphere, 
+           // { position: new BABYLON.Vector3(0, 0, -12.5), normal: new BABYLON.Vector3(0, 0, -1), size: new BABYLON.Vector3(5, 5, 5) });
+           // decal.material = decalMaterial;
+           //var sphere = BABYLON.Mesh.CreateSphere("Sphere0", 16, 3);
+           // sphere.material = multimat;
+
+            //sphere.subMeshes = [];
+        // var verticesCount = sphere.getTotalVertices();
+            
+           // new BABYLON.SubMesh(0, 0, 0, 0, 900, sphere);
+
+           // let cvs = canvas;
+		  //  let ctx = cvs.getContext('2d');
+          //  console.log('ctx',ctx);
+          //  var img = new Image();
+	// img.src = 'https://c0d1-103-250-164-233.ngrok.io/example2/logoA.png';
+	// img.onload = function() {
+    //     //Add image to dynamic texture
+    //     container_box.drawImage(this, 0, 0);
+	// 	containerMet.update();
+
+    //     containerMet.drawImage(this, 10, 490, 10, 12, 156, 136, 200, 220)
+	// 	containerMet.update();	
+
+	
+
+
+            //  const sphere = BABYLON.MeshBuilder.CreateSphere("sphere", {slice_: 0.24, diameter:25, wrap: true, sideOrientation: BABYLON.Mesh.DOUBLESIDE});
+
+            //  sphere.target = sphere;
+            // containerMet.diffuseTexture = new BABYLON.Texture("https://c0d1-103-250-164-233.ngrok.io/example2/logoA.png", scene);
+            // containerMet.diffuseTexture.hasAlpha = true;
+            // var decal = BABYLON.MeshBuilder.CreateDecal("decal", sphere, 
+            //  { position: new BABYLON.Vector3(0, 0, -12.5), normal: new BABYLON.Vector3(0, 0, -1), size: new BABYLON.Vector3(5, 5, 5) });
+            // decal.material = containerMet;
+        });
+        UiPanel.addControl(logoButton);
+
+            //  var button_logo = new BABYLON.GUI.StackPanel();
+            //  button_logo.width = "200px";
+            //  button_logo.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            //  button_logo.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+            // buttonTexture.addControl(button_logo);
+
+            // var textBlock2 = new BABYLON.GUI.TextBlock();
+            // textBlock2.text = "Add Logo :";
+            // textBlock2.height = "30px";
+            // textBlock2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            // textBlock2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+            // buttonTexture.addControl(textBlock2);
+            
+            // var logoBtn = new BABYLON.GUI.Button.CreateSimpleButton("logobtn", "Logo");
+           
+            // logoBtn.height = "150px";
+            // logoBtn.width = "150px";
+            // logoBtn.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+           
+           // buttonTexture.addControl(logoBtn);
+
+            // Append glTF model to scene.
+            ContainerBox = BABYLON.SceneLoader.Append("https://c0d1-103-250-164-233.ngrok.io/models/gltf/oilcannoshadow/", "Container.gltf", scene, function (scene, skeletons) {
+                // Create a default arc rotate camera and light.
+                scene.createDefaultCameraOrLight(true, true, true);
+                console.log('scene', scene);
+               // var textureContext = textureGround.getContext();
+                var assetsManager = new BABYLON.AssetsManager(scene);
+                console.log('assetsManager', assetsManager);
+                // The default camera looks at the back of the asset.
+                // Rotate the camera by 180 degrees to the front of the asset.
+                scene.activeCamera.alpha += Math.PI;
+                container_box = scene.getMeshByName('container');
+                cap_box = scene.getMeshByName('cap');
+                console.log('container_box', container_box);
+                console.log('cap_box', cap_box);
+                console.log('cap_box', skeletons);
+                containerMet = new BABYLON.StandardMaterial("container", scene);
+                capMet = new BABYLON.StandardMaterial("cap", scene);
+
+               // var textureGround = new BABYLON.DynamicTexture("https://c0d1-103-250-164-233.ngrok.io/example2/logoA.png",{width:512, height:256}, scene);
+               // console.log('textureGround',textureGround);
+
+               // containerMet.bumpTexture = new BABYLON.Texture("https://c0d1-103-250-164-233.ngrok.io/example2/logoA.png");
+
+               // multimat = new BABYLON.MultiMaterial("multi", scene);
+               // multimat.subMaterials.push(containerMet);
+
+
+               // myDynamicTexture = new BABYLON.DynamicTexture("container", textureResolution, scene);
+               // texture = canvas.getContext();
+               // console.log('texture',texture);
+               // console.log('texture',texture);
+                //containerMet.diffuseTexture = texture;
+                //containerMet.bumpTexture = new BABYLON.Texture("https://c0d1-103-250-164-233.ngrok.io/example2/logoA.png", scene);
+            });
+
+
+            var onPointerDown = function (e) {
+                var pick = scene.pick(scene.pointerX, scene.pointerY, null, false, null, (p0, p1, p2, ray) => {
+                    var p0p1 = p0.subtract(p1);
+                    var p2p1 = p2.subtract(p1);
+                    var normal = BABYLON.Vector3.Cross(p0p1, p2p1);
+                    return (BABYLON.Vector3.Dot(ray.direction, normal) < 0);
+                });
+
+                if (pick.hit) {
+                    console.log('click event',pick.pickedMesh);
+
+                    var mesh = scene.getMeshByName(pick.pickedMesh.name);
+                    selectedPickMash = mesh;
+                    // console.log('materialsss', mesh);
+                  //  changeTexture(mesh, pick.pickedMesh.name)
+
+                }
+            };
+
+            // function changeTexture() {
+            //     var mat = new BABYLON.StandardMaterial("mat", scene);
+            //     var texture = new BABYLON.Texture("assets/img/imgNew.png", scene);
+            //     mat.diffuseTexture = texture;
+            //     mesh.material = mat;
+            // }
+
+            function changeTexture(mesh, name) {
+                console.log('changeTexture mesh', mesh);
+                var mat = new BABYLON.StandardMaterial("mat", scene);
+                const randomBetween = (min, max) => min + Math.floor(Math.random() * (max - min + 1));
+                const r = randomBetween(0, 255);
+                const g = randomBetween(0, 255);
+                const b = randomBetween(0, 255);
+                switch (name) {
+                    case 'container':
+                        // alert(name + 'selected' )
+                        mat.reflectivityColor = new BABYLON.Color3(randomBetween(0, 255), randomBetween(0, 255), randomBetween(0, 255));
+                        // mat.diffuseColor = new BABYLON.Color3(1, 0, 0);
+                        // Masking Logo
+                        mat.diffuseTexture = new BABYLON.Texture("https://c0d1-103-250-164-233.ngrok.io/example2/logoA.png", scene);
+                       
+                        break;
+                    case 'cap':
+                        console.log('randomBetween', r, g, b);
+                        mat.diffuseColor = new BABYLON.Color3(randomBetween(0, 255), randomBetween(0, 255), randomBetween(0, 255));
+                        mat.reflectivityColor = new BABYLON.Color3(r, g, b);
+                        mat.albedoColor = new BABYLON.Color3(0.01, 0.01, 0.01);
+                }
+                console.log('mat', mat);
+                mesh.material = mat;
+                
+            }
+
+            scene.onPrePointerObservable.add(onPointerDown, BABYLON.PointerEventTypes.POINTERDOWN);
+
+
+
+            scene.onDispose = function () {
+                scene.onPrePointerObservable.removeCallback(onPointerDown);
+            };
+            // scene.onPointerDown = function (evt, pickResult) {
+            //     if (pickResult.hit) {
+            //         console.log('pickResult',pickResult);
+            //         if (pickResult.pickedMesh.name == "Container") {
+            //             console.log('Box');
+            //             if (idleRange) scene.beginAnimation(skeleton, idleRange.from, idleRange.to, true);
+            //         }
+            //     }
+            // };
+            return scene;
+        };
+        window.initFunction = async function () {
+
+
+            var asyncEngineCreation = async function () {
+                try {
+                    return createDefaultEngine();
+                } catch (e) {
+                    console.log("the available createEngine function failed. Creating the default engine instead");
+                    return createDefaultEngine();
+                }
+            }
+
+            window.engine = await asyncEngineCreation();
+            if (!engine) throw 'engine should not be null.';
+            window.scene = delayCreateScene();
+        };
+        initFunction().then(() => {
+            sceneToRender = scene
+            engine.runRenderLoop(function () {
+                if (sceneToRender && sceneToRender.activeCamera) {
+                    sceneToRender.render();
+                }
+            });
+        });
+
+
+        function loadLogo() {
+            var materialPlane = new BABYLON.StandardMaterial("logo", scene);
+            materialPlane.diffuseTexture = new BABYLON.Texture(img_url, scene);
+            materialPlane.diffuseTexture.hasAlpha = true;
+            materialPlane.specularColor =  new BABYLON.Color3(0, 0, 0);
+
+            let logo = new BABYLON.MeshBuilder.CreatePlane(
+            "logo",
+            { width: 170 / 20, height: 50 / 10 },
+            this.scene,
+            true
+            );
+            logo.position = new BABYLON.Vector3(0, 0, -5);
+            logo.rotate(BABYLON.Axis.Y, Math.PI);
+            logo.material = materialPlane;
+        }
+
+        // Resize
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+
+        var loadingScreen = (function () {
+            function loadingScreen(scene) {
+
+                this._scene = scene;
+
+                this._container = new BABYLON.GUI.Container();
+                this._container.zIndex = 999;
+
+                this._background = new BABYLON.GUI.Rectangle();
+                this._background.width = 1;
+                this._background.height = 1;
+                this._background.background = "white";
+
+                this._text = new BABYLON.GUI.TextBlock(null, "Loading");
+                this._text.color = "black";
+                this._text.fontSize = "28px";
+                this._text.height = 0.25;
+                this._text.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+
+                this._image = new BABYLON.GUI.Image(null, "https://c0d1-103-250-164-233.ngrok.io/example2/logoA.png");
+                this._image.width = this._image.height = "25%";
+
+                advancedTexture.addControl(this._container);
+                this._container.addControl(this._background);
+                this._container.addControl(this._text);
+                this._container.addControl(this._image);
+
+                this.alpha = 0;
+
+                var _this = this;
+                this._loadingAnimation = function () {
+                    _this.alpha++;
+
+                    if (_this.alpha % 61 === 0) {
+                        _this.alpha = 1;
+                        _this._text.text = "Loading";
+                    }
+                    else if (_this.alpha % 15 === 0) {
+                        _this._text.text += "."
+                    }
+
+
+                };
+            }
+            loadingScreen.prototype.displayLoadingUI = function () {
+                var _this = this;
+                if (_this._scene) {
+                    _this._scene.registerBeforeRender(_this._loadingAnimation);
+                }
+                _this._container.isVisible = true;
+
+            };
+            loadingScreen.prototype.hideLoadingUI = function () {
+                var _this = this;
+                if (_this._scene) {
+                    _this._scene.unregisterBeforeRender(_this._loadingAnimation);
+                }
+                _this._container.isVisible = false;
+            };
+
+            return loadingScreen;
+        }());
+    </script>
+</body>
+
+</html>
